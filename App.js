@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { I18nManager, ScrollView, View } from 'react-native';
+import { I18nManager, ScrollView, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFonts, Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold, Tajawal_800ExtraBold } from '@expo-google-fonts/tajawal';
@@ -65,15 +65,42 @@ function Shell() {
   );
 }
 
+// لو حصل أي خطأ، بيظهر على الشاشة بدل صفحة فاضية (عشان نعرف المشكلة فين)
+class ErrorBoundary extends React.Component {
+  state = { error: null };
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <ScrollView style={{ flex: 1, backgroundColor: '#FFF1F4' }} contentContainerStyle={{ padding: 24, paddingTop: 60 }}>
+        <Text style={{ fontSize: 40, textAlign: 'center' }}>🐰💔</Text>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: '#F26B8A', textAlign: 'center', marginVertical: 12 }}>
+          حصلت مشكلة — صوّري الشاشة دي وابعتيها
+        </Text>
+        <Text selectable style={{ fontSize: 13, color: '#4A2C3A', fontFamily: 'monospace' }}>
+          {String(this.state.error?.message || this.state.error)}
+          {'\n\n'}
+          {String(this.state.error?.stack || '').slice(0, 1500)}
+        </Text>
+      </ScrollView>
+    );
+  }
+}
+
 export default function App() {
-  const [fontsLoaded] = useFonts({ Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold, Tajawal_800ExtraBold });
+  const [fontsLoaded, fontError] = useFonts({ Tajawal_400Regular, Tajawal_500Medium, Tajawal_700Bold, Tajawal_800ExtraBold });
   const [reloadKey, setReloadKey] = useState(0);
-  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#FFF1F4' }} />;
+  // لو الخط ماتحمّلش لأي سبب، نكمّل بالخط العادي بدل ما نفضل على شاشة فاضية
+  if (!fontsLoaded && !fontError) return <View style={{ flex: 1, backgroundColor: '#FFF1F4' }} />;
   return (
-    <SafeAreaProvider>
-      <AppProvider key={reloadKey} reload={() => setReloadKey((k) => k + 1)}>
-        <Shell />
-      </AppProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <AppProvider key={reloadKey} reload={() => setReloadKey((k) => k + 1)}>
+          <Shell />
+        </AppProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
