@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "لولو",
+    "slug": "lulu-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF1F4"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.saradrwish.lulu",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "لولو بتستخدم موقعك عشان تعرض لك الطقس ومواعيد الصلاة في مدينتك.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "ar",
+        "CFBundleLocalizations": [
+          "ar",
+          "en"
+        ]
+      }
+    },
+    "android": {
+      "package": "com.saradrwish.lulu",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFD6DE"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "لولو بتستخدم موقعك عشان تعرض لك الطقس ومواعيد الصلاة في مدينتك."
+        }
+      ]
+    ],
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "لولو",
+      "shortName": "لولو",
+      "lang": "ar",
+      "themeColor": "#FF8FAB",
+      "backgroundColor": "#FFF1F4"
+    },
+    "experiments": {
+      "baseUrl": "/lulu-app"
+    }
+  }
+}

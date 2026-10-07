@@ -1,0 +1,31 @@
+{
+  "name": "lulu-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "fix": "expo install --fix",
+    "web": "expo start --web",
+    "build:web": "expo export --platform web"
+  },
+  "dependencies": {
+    "@expo-google-fonts/tajawal": "*",
+    "@expo/metro-runtime": "~6.1.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "~54.0.0",
+    "expo-font": "~14.0.0",
+    "expo-haptics": "~15.0.0",
+    "expo-linear-gradient": "~15.0.0",
+    "expo-location": "~19.0.0",
+    "expo-status-bar": "~3.0.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.4",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-svg": "15.12.1",
+    "react-native-web": "^0.21.0"
+  },
+  "private": true
+}
