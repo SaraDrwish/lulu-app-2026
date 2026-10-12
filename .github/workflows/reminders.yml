@@ -1,0 +1,59 @@
+name: Lulu reminders
+
+on:
+  schedule:
+    - cron: '4-59/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Send a test notification now'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reminders
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: push
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Restore last run time
+        uses: actions/cache/restore@v4
+        with:
+          path: push/.state
+          key: reminders-state-${{ github.run_id }}
+          restore-keys: reminders-state-
+
+      - name: Install web-push
+        run: npm install
+
+      - name: Send due reminders
+        run: node send.mjs
+        env:
+          TEST: ${{ inputs.test }}
+          VAPID_SUBJECT: https://saradrwish.github.io/lulu-app-2026/
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          PUSH_SUBSCRIPTIONS: ${{ secrets.PUSH_SUBSCRIPTIONS }}
+
+      - name: Save last run time
+        if: ${{ inputs.test != true }}
+        uses: actions/cache/save@v4
+        with:
+          path: push/.state
+          key: reminders-state-${{ github.run_id }}

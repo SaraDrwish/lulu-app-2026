@@ -1,5 +1,2 @@
-// مفتاح الإشعارات العام (VAPID public key)
-// ده "عام" مش سرّي، فعادي يتحط في الكود.
-// ولّديه من الترمينال بالأمر:  npx web-push generate-vapid-keys
-// وحطي الـ Public Key هنا بين العلامتين '
-export const VAPID_PUBLIC_KEY = 'PASTE_YOUR_PUBLIC_KEY_HERE';
+ 
+export const VAPID_PUBLIC_KEY = 'BNeOGU9s5Qn4yZMp53eG5i3o9SyR-0sZj7NP_iqR0EuiAN3B0sXie3HWTsiMXfytaJGYmRewwn0hVYQJ45cRz4w';
