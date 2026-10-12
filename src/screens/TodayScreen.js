@@ -10,6 +10,7 @@ import { POP } from '../theme';
 import { clock, dayKey, daysBetween, greetingKey, gregText, hijriText, monthKey, time12, toHijri } from '../services/dates';
 import { PRAYERS, getPlace, getPrayer, getWeather, nextPrayer } from '../services/live';
 import { allUpcoming, countdown, eventEmoji, eventTitle } from '../services/events';
+import { HABITS, dayHabits } from '../services/habits';
 
 const TOTAL_PAGES = 604;
 export const juzOf = (p) => (p <= 21 ? 1 : Math.min(30, Math.floor((p - 22) / 20) + 2));
@@ -77,6 +78,58 @@ function Ring({ value, target, color, size = 64 }) {
       />
     </Svg>
   );
+}
+
+// كارت "إنجاز النهارده": المية + الورد + الأذكار في نظرة واحدة
+function DayProgress({ h }) {
+  const { t, n, c } = useApp();
+  const pct = Math.round(h.score * 100);
+  const pop = useRef(new Animated.Value(h.all ? 1 : 0)).current;
+  const wasAll = useRef(h.all);
+  useEffect(() => {
+    if (h.all && !wasAll.current) {
+      // أول ما تكمّلي الكل: احتفال صغير 🎉
+      pop.setValue(0);
+      Animated.spring(pop, { toValue: 1, friction: 3, tension: 120, useNativeDriver: true }).start();
+    }
+    wasAll.current = h.all;
+  }, [h.all]);
+
+  const body = (
+    <>
+      <Row between style={{ marginBottom: 12 }}>
+        <T w="bold" style={{ fontSize: 17, color: h.all ? '#fff' : c.ink }}>🌟 {t('dayProgress')}</T>
+        <T w="black" style={{ fontSize: 22, color: h.all ? '#fff' : c.pinkDeep }}>{n(pct)}%</T>
+      </Row>
+      <Row between>
+        {HABITS.map((hb) => {
+          const v = h.progress[hb.key];
+          const ok = h.done[hb.key];
+          return (
+            <View key={hb.key} style={{ flex: 1, alignItems: 'center' }}>
+              <View style={{ width: 64, height: 64, alignItems: 'center', justifyContent: 'center' }}>
+                <Ring value={v} target={1} color={h.all ? '#fff' : hb.color} />
+                <Text style={{ fontSize: 24 }}>{ok ? '✅' : hb.emoji}</Text>
+              </View>
+              <T w="bold" center style={{ fontSize: 12, marginTop: 4, color: h.all ? '#fff' : c.ink }}>{t(hb.label)}</T>
+              <T center style={{ fontSize: 11, color: h.all ? '#fff' : c.inkSoft }}>{n(Math.round(v * 100))}%</T>
+            </View>
+          );
+        })}
+      </Row>
+      <Animated.View
+        style={{
+          marginTop: 10,
+          transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) }],
+        }}
+      >
+        <T w="bold" center style={{ fontSize: 14, color: h.all ? '#fff' : c.inkSoft }}>
+          {h.all ? t('allDoneDay') : h.doneCount > 0 ? t('keepGoing', { n: n(3 - h.doneCount) }) : t('startDay')}
+        </T>
+      </Animated.View>
+    </>
+  );
+  return h.all ? <Card colors={['#FFB65C', '#FF8FAB']}>{body}</Card> : <Card>{body}</Card>;
 }
 
 function DhikrItem({ d, count, onTap, i }) {
@@ -200,6 +253,7 @@ export default function TodayScreen({ go }) {
   // ===== الأذكار =====
   const counts = day.dhikr || {};
   const allDhikr = adhkar.length > 0 && adhkar.every((d) => (counts[d.id] || 0) >= d.target);
+  const habits = dayHabits(day, settings, adhkar);
 
   // ===== ملخصات =====
   const left = tasks.filter((x) => !x.done).length;
@@ -241,6 +295,11 @@ export default function TodayScreen({ go }) {
             <View style={pill}><T w="bold" center style={{ color: '#fff', fontSize: 13 }}>🌙 {hijriText(hijri, lang, n)}</T></View>
           </Row>
         </Card>
+      </FadeIn>
+
+      {/* إنجاز النهارده */}
+      <FadeIn delay={90}>
+        <DayProgress h={habits} />
       </FadeIn>
 
       {/* الطقس + الصلاة */}

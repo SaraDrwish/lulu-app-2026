@@ -1,0 +1,9 @@
+{
+  "name": "lulu-push",
+  "private": true,
+  "type": "module",
+  "description": "Sends Lulu reminder notifications (run by GitHub Actions)",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

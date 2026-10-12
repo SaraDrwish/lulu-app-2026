@@ -2,7 +2,7 @@
 // - صفحة التطبيق: من النت الأول (عشان التحديثات توصل)، ولو مفيش نت من النسخة المحفوظة
 // - باقي الملفات (JS / خطوط / صور): من النسخة المحفوظة الأول عشان السرعة
 // - الطقس والصلاة (مواقع تانية): مبنلمسهاش، التطبيق بيتعامل معاها لوحده
-const CACHE = 'lulu-v1';
+const CACHE = 'lulu-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -44,5 +44,39 @@ self.addEventListener('fetch', (e) => {
           return res;
         })
     )
+  );
+});
+
+// ===== الإشعارات =====
+// لما GitHub Actions يبعت تذكير، المتصفح بيصحّي الـ service worker ده ويوصله الرسالة
+self.addEventListener('push', (e) => {
+  let d = {};
+  try {
+    d = e.data ? e.data.json() : {};
+  } catch {
+    d = { body: e.data ? e.data.text() : '' };
+  }
+  e.waitUntil(
+    self.registration.showNotification(d.title || 'لولو 🐰', {
+      body: d.body || '',
+      icon: './icons/icon-192.png',
+      badge: './icons/icon-192.png',
+      tag: d.tag || 'lulu', // تذكير جديد من نفس النوع بيحل محل القديم بدل ما يتكوموا
+      renotify: true,
+      lang: 'ar',
+      dir: 'rtl',
+      data: { url: d.url || './' },
+    })
+  );
+});
+
+// لما تضغطي على الإشعار: يفتح لولو (أو يرجّعها قدامك لو مفتوحة)
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) if ('focus' in c) return c.focus();
+      return self.clients.openWindow(e.notification.data?.url || './');
+    })
   );
 });

@@ -11,8 +11,10 @@ import FavsScreen from './more/FavsScreen';
 import WeightScreen from './more/WeightScreen';
 import AdhkarScreen from './more/AdhkarScreen';
 import SettingsScreen from './more/SettingsScreen';
+import RemindersScreen from './more/RemindersScreen';
 
 const ITEMS = [
+  { key: 'reminders', emoji: '🔔', title: 'myReminders', sub: 'myRemindersSub', C: RemindersScreen },
   { key: 'events', emoji: '🎀', title: 'events', sub: 'eventsSub', C: EventsScreen },
   { key: 'money', emoji: '💰', title: 'money', sub: 'moneySub', C: MoneyScreen },
   { key: 'favs', emoji: '💖', title: 'favs', sub: 'favsSub', C: FavsScreen },

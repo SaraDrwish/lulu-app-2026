@@ -1,7 +1,7 @@
 // التقويم: شهري (بألوان المود والمناسبات) + يومي (كل تفاصيل اليوم)
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
-import { Bouncy, Card, FadeIn, Header, Input, Row, Segments, SectionTitle, T } from '../components/ui';
+import { Bouncy, Card, FadeIn, Header, Input, Progress, Row, Segments, SectionTitle, T } from '../components/ui';
 import MoodPicker from '../components/MoodPicker';
 import { BarList } from '../components/Charts';
 import { useApp } from '../AppContext';
@@ -9,9 +9,10 @@ import { NAMES } from '../i18n';
 import { MOODS, moodOf, monthMoodStats } from '../services/mood';
 import { builtInBetween, eventEmoji, eventTitle, userEventsInMonth } from '../services/events';
 import { dayKey, gregText, hijriText, monthGrid, monthKey, toHijri } from '../services/dates';
+import { HABITS, dayHabits, monthHabitStats } from '../services/habits';
 
 export default function CalendarScreen() {
-  const { t, n, lang, c, days, events, diary, months, setMonths, tasks, settings } = useApp();
+  const { t, n, lang, c, days, events, diary, months, setMonths, tasks, settings, adhkar } = useApp();
   const today = new Date();
   const [mode, setMode] = useState('month');
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -30,6 +31,7 @@ export default function CalendarScreen() {
   const evOn = (d) => monthEvents.filter((e) => e.date.getDate() === d.getDate());
 
   const stats = monthMoodStats(days, y, m);
+  const hStats = monthHabitStats(days, settings, adhkar, y, m);
   const mk = monthKey(cursor);
   const monthInfo = months[mk] || {};
   const setMonthInfo = (patch) => setMonths((all) => ({ ...all, [mk]: { ...(all[mk] || {}), ...patch } }));
@@ -45,6 +47,7 @@ export default function CalendarScreen() {
   // ===== تفاصيل اليوم =====
   const sk = dayKey(sel);
   const sd = days[sk] || {};
+  const selH = dayHabits(sd, settings, adhkar);
   const selEvents = [
     ...userEventsInMonth(events, sel.getFullYear(), sel.getMonth()),
     ...builtInBetween(sel, sel),
@@ -108,6 +111,7 @@ export default function CalendarScreen() {
                   const mood = moodOf(days[k]?.mood);
                   const isToday = k === dayKey(today);
                   const ev = evOn(d);
+                  const h = dayHabits(days[k], settings, adhkar);
                   return (
                     <Bouncy key={i} outer={{ width: '14.2857%', aspectRatio: 1, padding: 2 }} style={{ flex: 1 }} onPress={() => openDay(d)}>
                       <View
@@ -116,15 +120,21 @@ export default function CalendarScreen() {
                           borderRadius: 14,
                           alignItems: 'center',
                           justifyContent: 'center',
-                          backgroundColor: mood ? (c.dark ? mood.color + '55' : mood.soft) : 'transparent',
-                          borderWidth: isToday ? 2 : 0,
-                          borderColor: c.orange,
+                          backgroundColor: mood ? (c.dark ? mood.color + '55' : mood.soft) : h.all ? (c.dark ? '#5A3A28' : '#FFF1D6') : 'transparent',
+                          borderWidth: isToday || h.all ? 2 : 0,
+                          borderColor: isToday ? c.orange : '#FFB65C',
                         }}
                       >
-                        {mood ? <Text style={{ fontSize: 13 }}>{mood.emoji}</Text> : null}
-                        <T w={isToday ? 'black' : 'medium'} center style={{ fontSize: mood ? 11 : 14 }}>{n(d.getDate())}</T>
+                        {h.all ? <Text style={{ position: 'absolute', top: -4, right: -2, fontSize: 11 }}>🌟</Text> : null}
+                        {mood ? <Text style={{ fontSize: 12 }}>{mood.emoji}</Text> : null}
+                        <T w={isToday ? 'black' : 'medium'} center style={{ fontSize: mood ? 11 : 13 }}>{n(d.getDate())}</T>
+                        {h.doneCount > 0 ? (
+                          <Text style={{ fontSize: 7, lineHeight: 9 }}>
+                            {HABITS.filter((hb) => h.done[hb.key]).map((hb) => hb.emoji).join('')}
+                          </Text>
+                        ) : null}
                         {ev.length > 0 ? (
-                          <View style={{ flexDirection: 'row', gap: 2, position: 'absolute', bottom: 3 }}>
+                          <View style={{ flexDirection: 'row', gap: 2, position: 'absolute', top: 3, left: 4 }}>
                             {ev.slice(0, 3).map((e, j) => (
                               <View key={j} style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: e.kind === 'mine' ? c.pinkDeep : e.kind === 'islamic' ? '#22C55E' : c.orange }} />
                             ))}
@@ -134,6 +144,32 @@ export default function CalendarScreen() {
                     </Bouncy>
                   );
                 })}
+              </Row>
+              <Row wrap gap={10} style={{ marginTop: 10, justifyContent: 'center' }}>
+                {HABITS.map((hb) => (
+                  <T key={hb.key} style={{ fontSize: 11, color: c.inkSoft }}>{hb.emoji} {t(hb.label)}</T>
+                ))}
+                <T style={{ fontSize: 11, color: c.inkSoft }}>🌟 {t('fullDays')}</T>
+              </Row>
+            </Card>
+          </FadeIn>
+
+          {/* عادات الشهر */}
+          <FadeIn delay={50}>
+            <Card>
+              <SectionTitle emoji="🗓️" title={t('habitsMonth')} />
+              {HABITS.map((hb) => (
+                <View key={hb.key} style={{ marginBottom: 10 }}>
+                  <Row between style={{ marginBottom: 4 }}>
+                    <T w="medium" style={{ fontSize: 13 }}>{hb.emoji} {t(hb.label)}</T>
+                    <T w="bold" style={{ fontSize: 12, color: c.inkSoft }}>{t('daysOf', { d: n(hStats[hb.key]), t: n(hStats.counted) })}</T>
+                  </Row>
+                  <Progress value={hStats.counted ? (hStats[hb.key] / hStats.counted) * 100 : 0} height={9} colors={[hb.color, c.orange]} />
+                </View>
+              ))}
+              <Row between style={{ marginTop: 4 }}>
+                <T w="bold">{t('fullDays')}</T>
+                <T w="black" style={{ color: c.orange, fontSize: 18 }}>{n(hStats.all)}</T>
               </Row>
             </Card>
           </FadeIn>
@@ -218,20 +254,31 @@ export default function CalendarScreen() {
           </FadeIn>
 
           <FadeIn delay={120} key={sk + 's'}>
-            <Row gap={10}>
-              <Card style={{ flex: 1, alignItems: 'center' }}>
-                <Text style={{ fontSize: 22 }}>💧</Text>
-                <T w="black" center>{n(sd.water || 0)}/{n(settings.waterGoal)}</T>
-              </Card>
-              <Card style={{ flex: 1, alignItems: 'center' }}>
-                <Text style={{ fontSize: 22 }}>📗</Text>
-                <T w="black" center>{n(sd.wird || 0)} {t('pages')}</T>
-              </Card>
-              <Card style={{ flex: 1, alignItems: 'center' }}>
-                <Text style={{ fontSize: 22 }}>📿</Text>
-                <T w="black" center>{n(Object.values(sd.dhikr || {}).reduce((a, b) => a + b, 0))}</T>
-              </Card>
-            </Row>
+            <Card colors={selH.all ? ['#FFB65C', '#FF8FAB'] : undefined}>
+              <Row between style={{ marginBottom: 10 }}>
+                <T w="bold" style={{ color: selH.all ? '#fff' : c.ink }}>🌟 {t('dayProgress')}</T>
+                <T w="black" style={{ color: selH.all ? '#fff' : c.pinkDeep }}>{n(Math.round(selH.score * 100))}%</T>
+              </Row>
+              {[
+                ['water', `${n(sd.water || 0)}/${n(settings.waterGoal)}`],
+                ['wird', `${n(sd.wird || 0)} ${t('pages')}`],
+                ['dhikr', n(Object.values(sd.dhikr || {}).reduce((a, b) => a + b, 0))],
+              ].map(([key, label]) => {
+                const hb = HABITS.find((x) => x.key === key);
+                return (
+                  <View key={key} style={{ marginBottom: 8 }}>
+                    <Row between style={{ marginBottom: 4 }}>
+                      <T w="medium" style={{ fontSize: 13, color: selH.all ? '#fff' : c.ink }}>
+                        {selH.done[key] ? '✅' : hb.emoji} {t(hb.label)}
+                      </T>
+                      <T w="bold" style={{ fontSize: 12, color: selH.all ? '#fff' : c.inkSoft }}>{label}</T>
+                    </Row>
+                    <Progress value={selH.progress[key] * 100} height={8} colors={selH.all ? ['#fff', '#fff'] : [hb.color, c.orange]} />
+                  </View>
+                );
+              })}
+              {selH.all ? <T w="bold" center style={{ color: '#fff', marginTop: 4 }}>{t('allDoneDay')}</T> : null}
+            </Card>
           </FadeIn>
 
           <FadeIn delay={180} key={sk + 'e'}>
